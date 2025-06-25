@@ -3,29 +3,27 @@ import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Alert,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity
+  Alert, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View
 } from 'react-native';
 
 export default function SignupScreen() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [dob, setDOB] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [department, setDepartment] = useState('');
   const [employeeId, setEmployeeId] = useState('');
-  const [showDatePicker, setShowDatePicker] = useState(false);
-
   const router = useRouter();
+
+  const backendUrl =
+    Platform.OS === 'web'
+      ? 'http://localhost:5000/signup'
+      : 'http://192.168.199.225:5000/signup';
 
   const showAlert = (title: string, message: string) => {
     if (Platform.OS === 'web') {
@@ -35,22 +33,26 @@ export default function SignupScreen() {
     }
   };
 
-  // Basic validations
   const isEmailValid = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const isPhoneValid = (phone: string) =>
-    /^\d{10}$/.test(phone); // 10 digits only
+  const isPhoneValid = (phone: string) => /^\d{10}$/.test(phone);
 
-  const backendUrl =
-    Platform.OS === 'web'
-      ? 'http://localhost:5000/signup'
-      : 'http://192.168.199.225:5000/signup'; // Replace IP with your actual one
+  const isPasswordStrong = (password: string) =>
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^+=])[A-Za-z\d@$!%*?&#^+=]{6,}$/.test(password);
+
+  const onDOBChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      const iso = selectedDate.toISOString().split('T')[0];
+      setDOB(iso);
+    }
+  };
 
   const handleSignup = async () => {
     if (
-      !username || !password || !firstName || !lastName || !email ||
-      !address || !phoneNumber || !dob || !department || !employeeId
+      !username || !password || !firstName || !lastName ||
+      !email || !address || !phoneNumber || !dob || !department || !employeeId
     ) {
       showAlert('Validation Error', 'Please fill all the fields.');
       return;
@@ -66,23 +68,21 @@ export default function SignupScreen() {
       return;
     }
 
+    if (!isPasswordStrong(password)) {
+      showAlert(
+        'Weak Password',
+        'Password must be at least 6 characters, include uppercase, lowercase, number, and special character.'
+      );
+      return;
+    }
+
     try {
       const response = await fetch(backendUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username,
-          password,
-          firstName,
-          lastName,
-          email,
-          address,
-          phoneNumber,
-          dob,
-          department,
-          employeeId,
+          username, password, firstName, lastName, email,
+          address, phoneNumber, dob, department, employeeId
         }),
       });
 
@@ -90,7 +90,7 @@ export default function SignupScreen() {
 
       if (response.ok) {
         showAlert('Success', data.message);
-        router.push('index' as never); // Navigate to login
+        router.push('index' as never);
       } else {
         showAlert('Error', data.message);
       }
@@ -100,29 +100,25 @@ export default function SignupScreen() {
     }
   };
 
-  const onDOBChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      const iso = selectedDate.toISOString().split('T')[0];
-      setDOB(iso); // Format: YYYY-MM-DD
-    }
-  };
-
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.title}>Sign Up</Text>
 
-      <TextInput style={styles.input} placeholder="Username" value={username} onChangeText={setUsername} />
-      <TextInput style={styles.input} placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
       <TextInput style={styles.input} placeholder="First Name" value={firstName} onChangeText={setFirstName} />
       <TextInput style={styles.input} placeholder="Last Name" value={lastName} onChangeText={setLastName} />
+      <TextInput style={styles.input} placeholder="Username" value={username} onChangeText={setUsername} />
+      <TextInput style={styles.input} placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
       <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
       <TextInput style={styles.input} placeholder="Address" value={address} onChangeText={setAddress} />
-      <TextInput style={styles.input} placeholder="Phone Number" value={phoneNumber} onChangeText={setPhoneNumber} keyboardType="number-pad" />
+      <TextInput style={styles.input} placeholder="Phone Number" keyboardType="numeric" value={phoneNumber} onChangeText={setPhoneNumber} />
+      <TextInput style={styles.input} placeholder="Employee ID" value={employeeId} onChangeText={setEmployeeId} />
 
-      <TouchableOpacity onPress={() => setShowDatePicker(true)} style={[styles.input, { justifyContent: 'center' }]}>
-        <Text>{dob || 'Select Date of Birth'}</Text>
+      <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
+        <Text style={{ color: dob ? 'black' : '#999' }}>
+          {dob || 'Select Date of Birth'}
+        </Text>
       </TouchableOpacity>
+
       {showDatePicker && (
         <DateTimePicker
           value={dob ? new Date(dob) : new Date()}
@@ -141,8 +137,6 @@ export default function SignupScreen() {
         <Picker.Item label="Mechanical" value="MECH" />
       </Picker>
 
-      <TextInput style={styles.input} placeholder="Employee ID" value={employeeId} onChangeText={setEmployeeId} />
-
       <TouchableOpacity style={styles.button} onPress={handleSignup}>
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
@@ -150,44 +144,15 @@ export default function SignupScreen() {
       <TouchableOpacity onPress={() => router.push('index' as never)}>
         <Text style={styles.linkText}>Already have an account? Log In</Text>
       </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-    backgroundColor: '#f5f5f5',
-  },
-  title: {
-    fontSize: 26,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#999',
-    padding: 10,
-    marginVertical: 8,
-    borderRadius: 6,
-    backgroundColor: '#fff',
-  },
-  button: {
-    backgroundColor: '#1e90ff',
-    padding: 12,
-    borderRadius: 6,
-    marginTop: 10,
-  },
-  buttonText: {
-    textAlign: 'center',
-    color: '#fff',
-    fontWeight: '600',
-  },
-  linkText: {
-    color: '#1e90ff',
-    textAlign: 'center',
-    marginTop: 20,
-  },
+  container: { flex: 1, padding: 20, justifyContent: 'center', backgroundColor: '#f5f5f5' },
+  title: { fontSize: 26, marginBottom: 30, textAlign: 'center' },
+  input: { borderWidth: 1, borderColor: '#999', padding: 10, marginVertical: 10, borderRadius: 6 },
+  button: { backgroundColor: '#1e90ff', padding: 12, borderRadius: 6, marginTop: 10 },
+  buttonText: { textAlign: 'center', color: '#fff', fontWeight: '600' },
+  linkText: { color: '#1e90ff', textAlign: 'center', marginTop: 20 },
 });
-
