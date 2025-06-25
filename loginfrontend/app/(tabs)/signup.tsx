@@ -45,7 +45,7 @@ export default function SignupScreen() {
   const backendUrl =
     Platform.OS === 'web'
       ? 'http://localhost:5000/signup'
-      : 'http://192.168.199.225:5000/signup'; // Replace IP with your actual one
+      : 'http://192.168.199.225:5000/signup'; 
 
   const handleSignup = async () => {
     if (
