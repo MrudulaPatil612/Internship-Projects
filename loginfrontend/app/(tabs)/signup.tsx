@@ -38,6 +38,7 @@ export default function SignupScreen() {
 
   const isPhoneValid = (phone: string) => /^\d{10}$/.test(phone);
 
+
   const isPasswordStrong = (password: string) =>
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^+=])[A-Za-z\d@$!%*?&#^+=]{6,}$/.test(password);
 
