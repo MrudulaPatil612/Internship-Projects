@@ -7,10 +7,12 @@ import {
 } from 'react-native';
 
 export default function SignupScreen() {
+  // States to manage form inputs
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -20,11 +22,13 @@ export default function SignupScreen() {
   const [employeeId, setEmployeeId] = useState('');
   const router = useRouter();
 
+  // Backend URL for API call
   const backendUrl =
     Platform.OS === 'web'
       ? 'http://localhost:5000/signup'
       : 'http://192.168.199.225:5000/signup';
 
+  // Helper function for alerts
   const showAlert = (title: string, message: string) => {
     if (Platform.OS === 'web') {
       window.alert(`${title}\n${message}`);
@@ -33,15 +37,16 @@ export default function SignupScreen() {
     }
   };
 
+  // Validation functions for input fields
   const isEmailValid = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const isPhoneValid = (phone: string) => /^\d{10}$/.test(phone);
 
-
   const isPasswordStrong = (password: string) =>
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^+=])[A-Za-z\d@$!%*?&#^+=]{6,}$/.test(password);
 
+  // Date of Birth picker handler
   const onDOBChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
     if (selectedDate) {
@@ -50,25 +55,36 @@ export default function SignupScreen() {
     }
   };
 
+  // Handle the form submission
   const handleSignup = async () => {
+    // Validate all fields are filled
     if (
-      !username || !password || !firstName || !lastName ||
+      !username || !password || !confirmPassword || !firstName || !lastName ||
       !email || !address || !phoneNumber || !dob || !department || !employeeId
     ) {
       showAlert('Validation Error', 'Please fill all the fields.');
       return;
     }
 
+    // Validate password confirmation
+    if (password !== confirmPassword) {
+      showAlert('Validation Error', 'Passwords do not match.');
+      return;
+    }
+
+    // Validate email format
     if (!isEmailValid(email)) {
       showAlert('Validation Error', 'Please enter a valid email address.');
       return;
     }
 
+    // Validate phone number (should be 10 digits)
     if (!isPhoneValid(phoneNumber)) {
       showAlert('Validation Error', 'Phone number must be 10 digits.');
       return;
     }
 
+    // Validate password strength (at least 6 chars, one uppercase, one lowercase, one number, one special char)
     if (!isPasswordStrong(password)) {
       showAlert(
         'Weak Password',
@@ -78,6 +94,7 @@ export default function SignupScreen() {
     }
 
     try {
+      // Make API request to backend
       const response = await fetch(backendUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -91,9 +108,9 @@ export default function SignupScreen() {
 
       if (response.ok) {
         showAlert('Success', data.message);
-        router.push('index' as never);
+        router.push('index' as never); // Redirect to the login page
       } else {
-        showAlert('Error', data.message);
+        showAlert('Error', data.message); // Show error from the backend
       }
     } catch (error) {
       showAlert('Network Error', 'Could not connect to server');
@@ -105,15 +122,18 @@ export default function SignupScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Sign Up</Text>
 
+      {/* Input fields */}
       <TextInput style={styles.input} placeholder="First Name" value={firstName} onChangeText={setFirstName} />
       <TextInput style={styles.input} placeholder="Last Name" value={lastName} onChangeText={setLastName} />
       <TextInput style={styles.input} placeholder="Username" value={username} onChangeText={setUsername} />
       <TextInput style={styles.input} placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
+      <TextInput style={styles.input} placeholder="Confirm Password" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} />
       <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
       <TextInput style={styles.input} placeholder="Address" value={address} onChangeText={setAddress} />
       <TextInput style={styles.input} placeholder="Phone Number" keyboardType="numeric" value={phoneNumber} onChangeText={setPhoneNumber} />
       <TextInput style={styles.input} placeholder="Employee ID" value={employeeId} onChangeText={setEmployeeId} />
 
+      {/* Date of Birth picker */}
       <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
         <Text style={{ color: dob ? 'black' : '#999' }}>
           {dob || 'Select Date of Birth'}
@@ -130,6 +150,7 @@ export default function SignupScreen() {
         />
       )}
 
+      {/* Department Dropdown */}
       <Picker selectedValue={department} style={styles.input} onValueChange={setDepartment}>
         <Picker.Item label="Select Department" value="" />
         <Picker.Item label="Computer Science" value="CSE" />
@@ -138,10 +159,12 @@ export default function SignupScreen() {
         <Picker.Item label="Mechanical" value="MECH" />
       </Picker>
 
+      {/* Submit Button */}
       <TouchableOpacity style={styles.button} onPress={handleSignup}>
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
 
+      {/* Link to Login page */}
       <TouchableOpacity onPress={() => router.push('index' as never)}>
         <Text style={styles.linkText}>Already have an account? Log In</Text>
       </TouchableOpacity>
